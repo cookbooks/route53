@@ -1,30 +1,30 @@
+require "fog"
+require "nokogiri"
+
+def name
+  @name ||= new_resource.name + "."
+end
+
+def value
+  @value ||= new_resource.value
+end
+
+def type
+  @type ||= new_resource.type
+end
+
+def ttl
+  @ttl ||= new_resource.ttl
+end
+
+def zone
+  @zone ||= Fog::DNS.new({ :provider => "aws",
+                           :aws_access_key_id => new_resource.aws_access_key_id,
+                           :aws_secret_access_key => new_resource.aws_secret_access_key }
+                         ).zones.get( new_resource.zone_id )
+end
+
 action :create do
-  require "fog"
-  require "nokogiri"
-
-  def name
-    @name ||= new_resource.name + "."
-  end
-
-  def value
-    @value ||= new_resource.value
-  end
-
-  def type
-    @type ||= new_resource.type
-  end
-
-  def ttl
-    @ttl ||= new_resource.ttl
-  end
-
-  def zone
-    @zone ||= Fog::DNS.new({ :provider => "aws",
-                             :aws_access_key_id => new_resource.aws_access_key_id,
-                             :aws_secret_access_key => new_resource.aws_secret_access_key }
-                           ).zones.get( new_resource.zone_id )
-  end
-
   def create
     begin
       zone.records.create({ :name => name,
@@ -51,38 +51,15 @@ action :create do
 end
 
 action :destroy do
-  require "fog"
-  require "nokogiri"
-
-  def name
-    @name ||= new_resource.name + "."
-  end
-  
-  def value
-    @value ||= new_resource.value
-  end
-
-  def type
-    @type ||= new_resource.type
-  end
-
-  def ttl
-    @ttl ||= new_resource.ttl
-  end
-  
-  def zone
-    @zone ||= Fog::DNS.new({ :provider => "aws",
-                             :aws_access_key_id => new_resource.aws_access_key_id,
-                             :aws_secret_access_key => new_resource.aws_secret_access_key }
-                           ).zones.get( new_resource.zone_id )
-  end
-
+ 
   record = zone.records.all.select do |record|
     record.name == name
   end.first
 
-  if value != record.value.first
+  if record.nil?
+    Chef::Log.info "Record #{name} don't exist!"
+  elsif value != record.value.first
     record.destroy
-    Chef::Log.info "Record deleted: #{name}"
+    Chef::Log.info "Record destroyed: #{name}"
   end
 end
