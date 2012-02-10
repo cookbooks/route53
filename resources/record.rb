@@ -1,4 +1,4 @@
-actions :create
+actions :create, :destroy
 
 attribute :name,                  :kind_of => String
 attribute :value,                 :kind_of => String
